@@ -1,0 +1,14 @@
+{
+	"name": "indate-uploader",
+
+
+  "version": "0.0.1",
+
+  "description": "Indate patching system.",
+
+  "author": "Zay Wolfe <wolfezay@gmail.com>",
+
+
+
+  "main": "./src/main.js"
+}
