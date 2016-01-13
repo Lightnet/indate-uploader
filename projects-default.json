@@ -1,0 +1,13 @@
+{
+  "projects": [
+    {
+      "identity": "text-show",
+      "build_path": "./build/",
+      "host": "127.0.0.1",
+      "ftp_path":"update/",
+      "port": 22,
+      "user": "update",
+      "password": "boxbyte"
+    }
+  ]
+}
