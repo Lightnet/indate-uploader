@@ -15,34 +15,6 @@ var getConfig = function ( path ) {
 
 
 //files
-var getProjectFiles = function (project, callback) {
-  var files = listFiles(project.build_path);
-  var newpath = './tmp/' + project.identity + '/';
-
-  fs.mkdirRecursive( './tmp/' + project.identity, function(err){
-    console.log('jar');
-
-    if (err){
-
-      console.error(err);
-
-    } else {
-
-      fs.copyRecursive( project.build_path, newpath, function(err){
-        if (err)
-          console.error(err);
-        else
-          callback(null, newpath);
-      });
-
-    }
-
-  });
-
-  console.log('babar');
-
-}
-
 
 var listFiles = function ( path, fileList ) {
   fileList = fileList || [];
@@ -67,8 +39,7 @@ var listFiles = function ( path, fileList ) {
 
 }
 
-var getChecksums = function (path, callback) {
-  var files = listFiles(path);
+var getChecksums = function (files, callback) {
   //variable to hold checksums
   var checksums = [];
 
@@ -80,7 +51,7 @@ var getChecksums = function (path, callback) {
 
       var path = file.split('/');
       var filename = path[path.length-1];
-      checksums.push({ filename: sum });
+      checksums.push({ path: '/files/' + filename, sum: sum });
 
       //if all the checksums are complete run callback
       if( checksums.length === files.length ) {
@@ -92,55 +63,88 @@ var getChecksums = function (path, callback) {
   });
 }
 
+//uploading
+
+
 //start code
 
 //variables
 var config = getConfig('./projects.json');
-var projectIndex = 0;
-var currentProject = {};
-var tmpPath = '';
-var exit = false;
-var state = 1;
+var updateData = {
+  projects : []
+};
 
-while(!exit) {
+var processProject = function (projectList, index) {
+  index = (index === undefined)? 0 : index;
 
-  switch ( state ) {
+  if ( index < projectList.length ) { //check if there are more projects to process.
+    var project = projectList[index];
 
-    case 1://getting project files together
-      console.log("moving files...");
+    //updating user
+    console.log('Doing project: ' + project.identity );
 
-      if ( config.projects.length > 0 ) {
+    //get list of files and move them to temporary folder
+    var fileList = listFiles(project.build_path);
+    var newpath = './tmp/' + project.identity + '/';
 
-        currentProject = config.projects[projectIndex];
-        getProjectFiles(currentProject, function (err, newpath) {
-          if (err) throw err;
+    fs.mkdirRecursive(newpath + '/files/', function(err) { //make tmp directory
+      if (err) throw err;
 
-          console.log("done");
-          tmpPath = newpath;
-          state = 2;
-        });
+      //update user
+      console.log("Moving files and making checksums...");
 
-      } else {//there are no projects configured
-        console.log( "please list projects in projects.json");
-        process.exit(0);
-      }
-      state = 0;
-      break
-
-    case 2://save checksums
-      getChecksums( './tmp/' + currentProject.identity , function (err, checksums) {
+      fs.copyRecursive(project.build_path, newpath + '/files/', function(err) { //move project files to tmp
         if (err) throw err;
 
-        console.log(checksums);
-        exit = true;
+        getChecksums(fileList, function(err, filesAndChecksums ) { //get checksums for files and save update.json file
+          if (err) throw err;
 
+          //update user
+          console.log("Writing project data...");
+
+          var projectData = {
+            project: project.identity,
+            files: filesAndChecksums
+          }
+
+          fs.writeFile(newpath + 'update.json', JSON.stringify(projectData, 4), 'utf8', function(err) {
+            if (err) throw err;
+
+            console.log('Beginning upload to server...');
+
+            var Sftp = require('sftp-upload');
+            sftp = new Sftp({
+              host: project.host,
+              username: project.user,
+              password: project.password,
+              port: project.port,
+              path: "./tmp",
+              remoteDir: project.ftp_path + "/indate"
+            });
+
+            sftp.on("error", console.log);
+            sftp.on("uploading", function(update){
+              console.log(update.file);
+              console.log("percent: " + update.percent);
+            });
+            sftp.on("completed", function(){
+              fs.rmrfSync('./tmp'); //remove tmp directory
+              console.log("uploading project " + project.identity + " COMPLETE");
+              console.log("#---------------------------------------------#");
+
+              //try to run next project
+              processProject(projectList, index+1);
+            });
+
+            sftp.upload();
+
+          });
+        });
       });
-      state = 0;
-      break;
-
-
-    default:
-      //wait for state to change
-      break;
+    });
   }
-}
+};
+
+processProject(config.projects, 0);
+
+

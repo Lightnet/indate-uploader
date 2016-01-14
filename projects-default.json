@@ -2,12 +2,16 @@
   "projects": [
     {
       "identity": "text-show",
-      "build_path": "./build/",
-      "host": "127.0.0.1",
-      "ftp_path":"update/",
+      "build_path": "/path/to/project",
+      "host": "yourftpserver",
+      "ftp_path":"/path/to/upload/to/server",
       "port": 22,
-      "user": "update",
-      "password": "boxbyte"
+      "user": "default",
+      "password": "default",
+      "privatekey" : ""
     }
-  ]
+  ],
+
+  "_comment":   "Replace with you're project and server information and rename to projects.json. Can have multiple projects."+
+                'Put path to keyfile in privatekey, if none is needed leave as blank "" '
 }
