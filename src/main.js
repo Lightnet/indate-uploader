@@ -39,7 +39,7 @@ var listFiles = function ( path, fileList ) {
 
 }
 
-var getChecksums = function (files, callback) {
+var getChecksums = function (files, project, callback) {
   //variable to hold checksums
   var checksums = [];
 
@@ -49,9 +49,9 @@ var getChecksums = function (files, callback) {
     checksum.file(file, function(err, sum ){
       if ( err ) callback(err);
 
-      var path = file.split('/');
-      var filename = path[path.length-1];
-      checksums.push({ path: '/files/' + filename, sum: sum });
+      var path = file.replace(project.build_path, '/update-files/' );
+
+      checksums.push({ path: path, sum: sum });
 
       //if all the checksums are complete run callback
       if( checksums.length === files.length ) {
@@ -70,9 +70,6 @@ var getChecksums = function (files, callback) {
 
 //variables
 var config = getConfig('./projects.json');
-var updateData = {
-  projects : []
-};
 
 var processProject = function (projectList, index) {
   index = (index === undefined)? 0 : index;
@@ -87,16 +84,16 @@ var processProject = function (projectList, index) {
     var fileList = listFiles(project.build_path);
     var newpath = './tmp/' + project.identity + '/';
 
-    fs.mkdirRecursive(newpath + '/files/', function(err) { //make tmp directory
+    fs.mkdirRecursive(newpath + '/update-files/', function(err) { //make tmp directory
       if (err) throw err;
 
       //update user
       console.log("Moving files and making checksums...");
 
-      fs.copyRecursive(project.build_path, newpath + '/files/', function(err) { //move project files to tmp
+      fs.copyRecursive(project.build_path, newpath + '/update-files/', function(err) { //move project files to tmp
         if (err) throw err;
 
-        getChecksums(fileList, function(err, filesAndChecksums ) { //get checksums for files and save update.json file
+        getChecksums(fileList, project, function(err, filesAndChecksums ) { //get checksums for files and save update.json file
           if (err) throw err;
 
           //update user
