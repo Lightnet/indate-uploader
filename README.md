@@ -22,6 +22,9 @@ This is the project uploader component of the system.
 ### Known Problems
 - If a problem occurs and the "tmp" directory is left behind, delete it or it will fail again.
 
+### Other Things
+- The build directory is throwaway and just for testing purposes. Projects can be anywhere as long as the path is reachable.
+
 ### Indate Patcher
 This is the actual patcher component that goes out to users.
 
