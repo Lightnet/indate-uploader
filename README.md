@@ -11,7 +11,7 @@ This is the project uploader component of the system.
 ### Setup
 - Copy "projects-default.json" to "projects.json".
 - Input your project location and other information.
-	- indentity is a unique id for indate and should be the same for in the patcher component to point to the right project.
+	- indentity is a unique id for indate and should be the same for the patcher to point to the right project.
 - Input the ftp server information.
 	- It's safe to put sensitive information here since the file is ignored by git and this part of Indate never goes out to users.
 - run "node ./src/main.js"
